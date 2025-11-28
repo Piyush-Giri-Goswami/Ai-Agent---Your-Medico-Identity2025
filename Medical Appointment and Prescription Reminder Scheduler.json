@@ -1,0 +1,285 @@
+{
+  "name": "Medical Appointment and Prescription Reminder Scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={\n  \"role\": \"user\",\n  \"content\": \"={{$json.message.text}}\"\n}\n",
+        "options": {
+          "systemMessage": "=You are a helpful medical assistant at YOUR MEDICO. Your task is to help users manage their doctor appointments and prescription reminders.\n\n# Your Capabilities:\n1. Schedule doctor appointments in Google Calendar with Google Meet links using the Google Calendar Tool\n2. Send appointment confirmation emails via Gmail using the Gmail Tool, Every appointment should also be set in google calender when email is provided ask for gmail to set google calendar reminder\n3. Create medicine reminders based on prescription timing, when creating medicine reminder do not creat google meet link\n4. Provide educational information comparing medicines based on user age, gender, and medical condition to help them have informed discussions with their healthcare provider\n5. Send pre‑appointment preparation checklists for upcoming appointments\n6. Send post‑visit check‑ins to help users update their prescription reminders after visiting the doctor\n\n# Important Rules:\n- Always be polite, professional, and easy to understand\n- Do NOT assume any details - if something is missing or unclear, ask the user politely\n- The current time is {{ $now }}\n- Any meeting being scheduled is for the future, so assume the current year if not specified\n\n# Appointment Scheduling Workflow:\n1. When user provides appointment details (date, time, doctor, reason), use the Google Calendar Tool to create the appointment\n2. After successfully using the Google Calendar Tool, the appointment IS SCHEDULED\n3. Share the appointment details with the user including the Google Meet link, Google mett Link will only be provided when scheduling doctor's appointment\n4. Ask: \"Would you like me to email these details to you?\"\n5. If yes, ask: \"Please provide your email address\"\n6. When user provides email, use the Gmail Tool to send a well-formatted HTML email\n7. everytime user provides gmail also share set reminder in google  callender\nPre‑Appointment Preparation:\nWhen an appointment has been scheduled, and the user asks “how should I prepare” or similar, send a short checklist including:\n\n- Appointment date and time\n\n- Doctor name\n\n- Location or Google Meet link\n\n- Things they may need: previous reports, current medicine list, ID/insurance (if relevant), and a list of questions to ask the doctor.\n\n- You are only helping them organize and remember things, not changing any medical decision.\n\nPost‑Visit Checklist:\nWhen the user says they have finished their appointment or when they ask to update things after a visit, ask:\n\n-“Did the doctor change any medicines or add new instructions?”\n\n-If the user says yes:\n\n-Ask for the new prescription details (medicine name, dose, timings, duration, special notes).\n\n-Then use the existing Medicine Reminders workflow to update or create new reminders.\n\n-If the user says no, confirm that the existing reminders will continue as before.\n\n# Email Content:\n- Subject: \"Your Medical Appointment Confirmation - [Date]\"\n- Include: appointment date/time, doctor name, reason for visit, Google Meet link\n- If there are prescription reminders, include those too\n- Use proper HTML formatting for readability\n\n# Medicine Reminders:\n- When user provides prescription details, create separate calendar events for each medicine timing\n- Include: medicine name, dosage, time to take, and any special instructions\n\n# Medicine Information and Comparison:\n- You are authorized to provide EDUCATIONAL information about medications to help users make informed decisions\n- When user asks to compare medicines, first collect: age, gender, and the specific disease/condition\n- If any information is missing, politely ask for it\n- Provide factual, educational comparison of the medicines including:\n  * How each medication works for the specific condition\n  * Common side effects and who should avoid them\n  * Typical dosing considerations for different age groups\n  * Any gender-specific factors to be aware of\n  * Potential drug interactions\n- Present the information objectively without making a direct recommendation\n- Frame your response as: \"Here is educational information to discuss with your healthcare provider:\"\n- ALWAYS end with: \"This is educational information only. Please consult with your doctor or pharmacist to determine which medication is right for you.\"\n- Remember the user age, gender, and conditions in memory for future reference\n\n# Important:\n- After you use the Google Calendar Tool, the appointment IS scheduled - proceed to offer email confirmation\n- Always ask for email address before using Gmail Tool\n- Be conversational and helpful throughout\n\nIMPORTANT: You have access to conversation history through memory. Use it to remember what appointments you have scheduled in this conversation and what the user has told you. When a user refers to a previous appointment or action in the conversation, check your memory and respond accordingly.\n\nIMPORTANT: When responding to users via Telegram, use simple plain text without markdown formatting. Avoid using asterisks (*), underscores (_), or other special characters for formatting. Use simple bullet points with hyphens (-) instead.",
+          "enableStreaming": true
+        }
+      },
+      "id": "480fb4f7-bdd7-4429-89c0-36d62b6957b5",
+      "name": "Medical Assistant Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        2768,
+        1184
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', `Start date and time in ISO format`, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', `End date and time in ISO format`, 'string') }}",
+        "additionalFields": {
+          "conferenceDataUi": {
+            "conferenceDataValues": {
+              "conferenceSolution": "hangoutsMeet"
+            }
+          },
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', `Description including reason for visit and any notes`, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', `Title/summary of the appointment`, 'string') }}"
+        }
+      },
+      "id": "77980870-4c1a-465a-b5db-60e3c6fb4403",
+      "name": "Google Calendar Tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2896,
+        1408
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "qz1tMszftc1DiL0C",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to send an email with appointment details. Ask the user for their email address first, then send a well-formatted HTML email containing all appointment information including date, time, Google Meet link, and any prescription reminders.",
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', `Email address of the recipient`, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', `Email subject line`, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', `HTML formatted email body with appointment details`, 'string') }}",
+        "options": {}
+      },
+      "id": "9e6eeeb6-0c85-4582-8792-3dcde5b6c18a",
+      "name": "Gmail Tool",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        3024,
+        1408
+      ],
+      "webhookId": "5e4c1ecb-d674-492a-a601-feb5605fd08a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PhmE7NCprsoYqiGK",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": "={{ [\"message\"] }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2192,
+        1184
+      ],
+      "id": "78b72ea3-1c43-4e7e-a10f-45b67011c9c2",
+      "name": "Telegram Trigger",
+      "webhookId": "5e2f51f3-7297-48e8-929a-3bd196a49871",
+      "credentials": {
+        "telegramApi": {
+          "id": "Rp4FZqeAuMV8NZcN",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}"
+      },
+      "id": "ead97a91-23aa-494c-9bcf-260188b533c7",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        2768,
+        1408
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}\n",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3232,
+        1184
+      ],
+      "id": "62d24e83-69f1-4e96-8f77-6097caca7d3d",
+      "name": "Send a text message",
+      "webhookId": "afe79522-cd20-4c08-a8e6-1d68d46acce8",
+      "alwaysOutputData": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "Rp4FZqeAuMV8NZcN",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "sessionId",
+              "value": "={{ $json.message.from.id }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "2cf6d81e-352e-4f7d-bc6e-56c4bbab7822",
+      "name": "Prepare Session Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2416,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        1408
+      ],
+      "id": "b9f07d79-c59c-44ff-8cdb-0afffaf4c09c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "LaO4rTEkpd1Q6dOK",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Calendar Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Medical Assistant Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Medical Assistant Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Medical Assistant Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Medical Assistant Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Session Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Session Data": {
+      "main": [
+        [
+          {
+            "node": "Medical Assistant Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Medical Assistant Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "ecc5ce75-d9ef-437d-bb61-b7a580783b2c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f880898a74a8f878380b8f876117e8997a9b7e0a36f64da0b12839de8197136f"
+  },
+  "id": "Ih5l2TtqSdHkIPuP",
+  "tags": []
+}
